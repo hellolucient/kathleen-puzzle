@@ -1,0 +1,12 @@
+{
+  "name": "Princess Kathleen Puzzle",
+  "short_name": "Kathleen",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#fff8ec",
+  "theme_color": "#3e261c",
+  "orientation": "any",
+  "icons": [
+    { "src": "icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}
