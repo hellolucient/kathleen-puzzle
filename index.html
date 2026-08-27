@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Kathleen" />
+  <meta name="theme-color" content="#3e261c" />
+  <title>Princess Kathleen Puzzle</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon.png" />
+  <style>
+    :root {
+      --cream: #fff8ec;
+      --ink: #3e261c;
+      --gold: #9a6e30;
+      --rose: #c46b7a;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      margin: 0; padding: 0; height: 100%;
+      background: var(--cream);
+      color: var(--ink);
+      font-family: Georgia, "Times New Roman", serif;
+      overflow: hidden;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    body {
+      position: fixed; inset: 0;
+      padding-top: var(--safe-top);
+      padding-bottom: var(--safe-bottom);
+    }
+    #app {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 8px 10px 6px;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex: 0 0 auto;
+      padding: 2px 4px 8px;
+    }
+    h1 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      white-space: nowrap;
+    }
+    .controls { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+    button {
+      font-family: Georgia, serif;
+      font-size: 15px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1.5px solid var(--gold);
+      background: #fff;
+      color: var(--ink);
+      min-height: 40px;
+    }
+    button.on { background: var(--ink); color: var(--cream); border-color: var(--ink); }
+    button:active { transform: scale(0.97); }
+    #stage {
+      position: relative;
+      flex: 1 1 auto;
+      min-height: 0;
+      border-radius: 16px;
+      background: #f3e4c8;
+      overflow: hidden;
+      box-shadow: inset 0 0 0 2px rgba(154,110,48,0.25);
+    }
+    #board {
+      position: absolute;
+      background: #efe0c4 center/cover no-repeat;
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(62,38,28,0.18);
+      overflow: hidden;
+    }
+    #board .ghost {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      opacity: 0.28;
+      pointer-events: none;
+      display: block;
+    }
+    #board.done .ghost { opacity: 1; transition: opacity 0.5s; }
+    .piece {
+      position: absolute;
+      left: 0; top: 0;
+      touch-action: none;
+      cursor: grab;
+      will-change: transform;
+      filter: drop-shadow(0 3px 4px rgba(40,20,10,0.28));
+    }
+    .piece.held {
+      cursor: grabbing;
+      filter: drop-shadow(0 14px 16px rgba(40,20,10,0.4));
+      z-index: 50 !important;
+    }
+    .piece.locked {
+      filter: none;
+      pointer-events: none;
+    }
+    #win {
+      display: none;
+      position: absolute;
+      inset: 0;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      background: rgba(62,38,28,0.28);
+      color: #fff8ec;
+      text-align: center;
+      z-index: 80;
+    }
+    #win.show { display: flex; }
+    #win h2 { margin: 0 0 8px; font-size: 36px; }
+    #win p { margin: 0 0 16px; font-size: 18px; }
+    #win button { font-size: 18px; padding: 10px 22px; }
+    #hint {
+      font-size: 13px;
+      color: var(--gold);
+      text-align: center;
+      padding: 6px 4px 2px;
+      flex: 0 0 auto;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>Princess Kathleen</h1>
+      <div class="controls">
+        <button id="btn6" type="button">6</button>
+        <button id="btn12" type="button" class="on">12</button>
+        <button id="btn24" type="button">24</button>
+        <button id="peek" type="button">Peek</button>
+        <button id="again" type="button">Mix up</button>
+      </div>
+    </header>
+    <div id="stage">
+      <div id="board"><img class="ghost" id="ghost" alt="" /></div>
+      <div id="win">
+        <h2>You did it</h2>
+        <p>Princess Kathleen is back together.</p>
+        <button id="playagain" type="button">Play again</button>
+      </div>
+    </div>
+    <div id="hint">Drag a piece onto the picture. It will click in when it is close.</div>
+  </div>
+  <script>
+  (function () {
+    const IMG_SRC = "cover.jpg";
+    const PRESETS = { 6: [3, 2], 12: [4, 3], 24: [6, 4] };
+    let cols = 4, rows = 3, count = 12;
+    let img = new Image();
+    let pieces = [];
+    let dragging = null;
+    let boardRect = { x: 0, y: 0, w: 0, h: 0 };
+    let peeking = false;
+
+    const stage = document.getElementById("stage");
+    const board = document.getElementById("board");
+    const ghost = document.getElementById("ghost");
+    const win = document.getElementById("win");
+
+    function rand(a, b) { return a + Math.random() * (b - a); }
+
+    function edgeGrid(c, r) {
+      const horiz = [];
+      const vert = [];
+      for (let y = 0; y < r; y++) {
+        horiz[y] = [];
+        for (let x = 0; x < c - 1; x++) horiz[y][x] = Math.random() < 0.5 ? 1 : -1;
+      }
+      for (let y = 0; y < r - 1; y++) {
+        vert[y] = [];
+        for (let x = 0; x < c; x++) vert[y][x] = Math.random() < 0.5 ? 1 : -1;
+      }
+      return { horiz, vert };
+    }
+
+    function codes(y, x, c, r, g) {
+      return {
+        n: y === 0 ? 0 : -g.vert[y - 1][x],
+        s: y === r - 1 ? 0 : g.vert[y][x],
+        w: x === 0 ? 0 : -g.horiz[y][x - 1],
+        e: x === c - 1 ? 0 : g.horiz[y][x],
+      };
+    }
+
+    function tabArc(x0, y0, x1, y1, kind, tab) {
+      if (kind === 0) return [[x1, y1]];
+      const dx = x1 - x0, dy = y1 - y0;
+      const len = Math.hypot(dx, dy) || 1;
+      const ux = dx / len, uy = dy / len;
+      const nx = uy * kind, ny = -ux * kind;
+      const steps = [
+        [0.32, 0, 0], [0.36, 0.06, -0.22], [0.42, 0.22, -0.55],
+        [0.50, 0.58, 0], [0.58, 0.22, 0.55], [0.64, 0.06, 0.22], [0.68, 0, 0],
+      ];
+      const pts = [];
+      for (const [t, out, side] of steps) {
+        pts.push([
+          x0 + ux * len * t + nx * tab * out + (-uy) * tab * side * kind,
+          y0 + uy * len * t + ny * tab * out + (ux) * tab * side * kind,
+        ]);
+      }
+      pts.push([x1, y1]);
+      return pts;
+    }
+
+    function piecePath(x0, y0, cw, ch, tab, e) {
+      const x1 = x0 + cw, y1 = y0 + ch;
+      const p = new Path2D();
+      p.moveTo(x0, y0);
+      for (const [x, y] of tabArc(x0, y0, x1, y0, e.n, tab)) p.lineTo(x, y);
+      for (const [x, y] of tabArc(x1, y0, x1, y1, e.e, tab)) p.lineTo(x, y);
+      for (const [x, y] of tabArc(x1, y1, x0, y1, e.s, tab)) p.lineTo(x, y);
+      for (const [x, y] of tabArc(x0, y1, x0, y0, e.w, tab)) p.lineTo(x, y);
+      p.closePath();
+      return p;
+    }
+
+    function layoutBoard() {
+      const sw = stage.clientWidth;
+      const sh = stage.clientHeight;
+      const aspect = img.naturalWidth / img.naturalHeight;
+      const margin = 18;
+      let w = sw - margin * 2;
+      let h = w / aspect;
+      if (h > sh - margin * 2) {
+        h = sh - margin * 2;
+        w = h * aspect;
+      }
+      const x = (sw - w) / 2;
+      const y = (sh - h) / 2;
+      board.style.width = w + "px";
+      board.style.height = h + "px";
+      board.style.left = x + "px";
+      board.style.top = y + "px";
+      boardRect = { x, y, w, h };
+    }
+
+    function makePieces() {
+      pieces.forEach((p) => p.el.remove());
+      pieces = [];
+      win.classList.remove("show");
+      board.classList.remove("done");
+      ghost.style.opacity = "";
+
+      const g = edgeGrid(cols, rows);
+      const cw = img.naturalWidth / cols;
+      const ch = img.naturalHeight / rows;
+      const tab = Math.min(cw, ch) * 0.22;
+      const pad = tab * 1.35;
+      const scale = boardRect.w / img.naturalWidth;
+
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const e = codes(r, c, cols, rows, g);
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.ceil(cw + pad * 2);
+          canvas.height = Math.ceil(ch + pad * 2);
+          const ctx = canvas.getContext("2d");
+          const path = piecePath(pad, pad, cw, ch, tab, e);
+          ctx.save();
+          ctx.clip(path);
+          ctx.drawImage(img, pad - c * cw, pad - r * ch);
+          ctx.restore();
+          ctx.strokeStyle = "rgba(62,38,28,0.45)";
+          ctx.lineWidth = 2.2;
+          ctx.stroke(path);
+
+          const el = document.createElement("img");
+          el.className = "piece";
+          el.src = canvas.toDataURL("image/png");
+          el.alt = "";
+          el.draggable = false;
+          stage.appendChild(el);
+
+          const dispW = canvas.width * scale;
+          const dispH = canvas.height * scale;
+          el.style.width = dispW + "px";
+          el.style.height = dispH + "px";
+
+          const homeX = boardRect.x + c * (boardRect.w / cols) - pad * scale;
+          const homeY = boardRect.y + r * (boardRect.h / rows) - pad * scale;
+
+          const piece = {
+            el, r, c, homeX, homeY, x: 0, y: 0,
+            w: dispW, h: dispH, locked: false, z: 1,
+          };
+          scatter(piece);
+          place(piece);
+          bind(piece);
+          pieces.push(piece);
+        }
+      }
+      restack();
+    }
+
+    function scatter(p) {
+      const sw = stage.clientWidth;
+      const sh = stage.clientHeight;
+      // keep pieces on the stage, biased off the middle of the board
+      const tries = 12;
+      let x, y;
+      for (let i = 0; i < tries; i++) {
+        x = rand(6, Math.max(8, sw - p.w - 6));
+        y = rand(6, Math.max(8, sh - p.h - 6));
+        const cx = x + p.w / 2;
+        const cy = y + p.h / 2;
+        const onBoard =
+          cx > boardRect.x + boardRect.w * 0.18 &&
+          cx < boardRect.x + boardRect.w * 0.82 &&
+          cy > boardRect.y + boardRect.h * 0.18 &&
+          cy < boardRect.y + boardRect.h * 0.82;
+        if (!onBoard) break;
+      }
+      p.x = x;
+      p.y = y;
+      p.locked = false;
+      p.el.classList.remove("locked");
+    }
+
+    function place(p) {
+      p.el.style.transform = "translate3d(" + p.x + "px," + p.y + "px,0)";
+    }
+
+    function restack() {
+      pieces
+        .filter((p) => !p.locked)
+        .sort((a, b) => a.z - b.z)
+        .forEach((p, i) => { p.el.style.zIndex = String(2 + i); });
+      pieces.filter((p) => p.locked).forEach((p) => { p.el.style.zIndex = "1"; });
+    }
+
+    function clientPoint(ev) {
+      if (ev.touches && ev.touches[0]) return { x: ev.touches[0].clientX, y: ev.touches[0].clientY };
+      if (ev.changedTouches && ev.changedTouches[0]) return { x: ev.changedTouches[0].clientX, y: ev.changedTouches[0].clientY };
+      return { x: ev.clientX, y: ev.clientY };
+    }
+
+    function stagePoint(ev) {
+      const r = stage.getBoundingClientRect();
+      const p = clientPoint(ev);
+      return { x: p.x - r.left, y: p.y - r.top };
+    }
+
+    function bind(p) {
+      const down = (ev) => {
+        if (p.locked || peeking) return;
+        ev.preventDefault();
+        const s = stagePoint(ev);
+        dragging = { piece: p, ox: s.x - p.x, oy: s.y - p.y };
+        p.z = Date.now();
+        p.el.classList.add("held");
+        restack();
+      };
+      p.el.addEventListener("pointerdown", down);
+      p.el.addEventListener("touchstart", down, { passive: false });
+    }
+
+    function move(ev) {
+      if (!dragging) return;
+      ev.preventDefault();
+      const s = stagePoint(ev);
+      const p = dragging.piece;
+      p.x = s.x - dragging.ox;
+      p.y = s.y - dragging.oy;
+      place(p);
+    }
+
+    function up(ev) {
+      if (!dragging) return;
+      ev.preventDefault();
+      const p = dragging.piece;
+      p.el.classList.remove("held");
+      const dx = p.x - p.homeX;
+      const dy = p.y - p.homeY;
+      const thresh = Math.min(p.w, p.h) * 0.22;
+      if (dx * dx + dy * dy < thresh * thresh) {
+        p.x = p.homeX;
+        p.y = p.homeY;
+        p.locked = true;
+        p.el.classList.add("locked");
+        tick();
+        if (pieces.every((q) => q.locked)) finish();
+      }
+      place(p);
+      restack();
+      dragging = null;
+    }
+
+    function tick() {
+      try {
+        const ac = new (window.AudioContext || window.webkitAudioContext)();
+        const o = ac.createOscillator();
+        const g = ac.createGain();
+        o.type = "sine";
+        o.frequency.value = 660;
+        g.gain.value = 0.04;
+        o.connect(g); g.connect(ac.destination);
+        o.start();
+        o.stop(ac.currentTime + 0.09);
+      } catch (e) {}
+    }
+
+    function finish() {
+      board.classList.add("done");
+      pieces.forEach((p) => { p.el.style.opacity = "0"; });
+      setTimeout(() => { win.classList.add("show"); }, 350);
+    }
+
+    function start() {
+      if (!img.naturalWidth) return;
+      layoutBoard();
+      ghost.src = IMG_SRC;
+      makePieces();
+    }
+
+    function setCount(n) {
+      count = n;
+      cols = PRESETS[n][0];
+      rows = PRESETS[n][1];
+      document.getElementById("btn6").classList.toggle("on", n === 6);
+      document.getElementById("btn12").classList.toggle("on", n === 12);
+      document.getElementById("btn24").classList.toggle("on", n === 24);
+      start();
+    }
+
+    document.getElementById("btn6").onclick = () => setCount(6);
+    document.getElementById("btn12").onclick = () => setCount(12);
+    document.getElementById("btn24").onclick = () => setCount(24);
+    document.getElementById("again").onclick = () => start();
+    document.getElementById("playagain").onclick = () => start();
+    document.getElementById("peek").onclick = () => {
+      peeking = !peeking;
+      document.getElementById("peek").classList.toggle("on", peeking);
+      ghost.style.opacity = peeking ? "0.92" : "";
+      pieces.forEach((p) => { p.el.style.visibility = peeking ? "hidden" : "visible"; });
+    };
+
+    stage.addEventListener("pointermove", move);
+    stage.addEventListener("pointerup", up);
+    stage.addEventListener("pointercancel", up);
+    stage.addEventListener("touchmove", move, { passive: false });
+    stage.addEventListener("touchend", up, { passive: false });
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+
+    window.addEventListener("resize", () => { if (img.naturalWidth) start(); });
+    document.addEventListener("gesturestart", (e) => e.preventDefault());
+
+    img.onload = start;
+    img.src = IMG_SRC;
+  })();
+  </script>
+</body>
+</html>
