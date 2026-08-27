@@ -1,0 +1,122 @@
+{
+  "body": {
+    "src": "assets/bodies/princess.png",
+    "w": 720,
+    "h": 1280,
+    "hole": {
+      "cx": 360,
+      "cy": 208,
+      "r": 120
+    }
+  },
+  "pages": [
+    {
+      "n": 1,
+      "scene": "assets/scenes/princess/s1.jpg",
+      "text": "Once there was you. You lived in a castle by the sea.",
+      "standee": {
+        "x": 0.5,
+        "y": 0.9,
+        "scale": 0.58
+      }
+    },
+    {
+      "n": 2,
+      "scene": "assets/scenes/princess/s2.jpg",
+      "text": "Tonight was the Moonlight Ball. But your crown was gone.",
+      "standee": {
+        "x": 0.22,
+        "y": 0.92,
+        "scale": 0.52
+      }
+    },
+    {
+      "n": 3,
+      "scene": "assets/scenes/princess/s3.jpg",
+      "text": "A tiny note said, Find me if you can. I am hiding where you last played.",
+      "standee": {
+        "x": 0.28,
+        "y": 0.9,
+        "scale": 0.5
+      }
+    },
+    {
+      "n": 4,
+      "scene": "assets/scenes/princess/s4.jpg",
+      "text": "In the garden you found a golden ribbon. In the puzzle room, a glass slipper.",
+      "standee": {
+        "x": 0.5,
+        "y": 0.9,
+        "scale": 0.52
+      }
+    },
+    {
+      "n": 5,
+      "scene": "assets/scenes/princess/s5.jpg",
+      "text": "You remembered. Last night you hid the crown under your pillow so it would be safe.",
+      "standee": {
+        "x": 0.24,
+        "y": 0.9,
+        "scale": 0.5
+      }
+    },
+    {
+      "n": 6,
+      "scene": "assets/scenes/princess/s6.jpg",
+      "text": "You put on your crown. When the ball was over you put it back, and the castle went quiet.",
+      "standee": {
+        "x": 0.22,
+        "y": 0.9,
+        "scale": 0.5
+      }
+    }
+  ],
+  "find": {
+    "page": 4,
+    "items": [
+      {
+        "id": "crown",
+        "src": "assets/objects/crown.png",
+        "x": 0.16,
+        "y": 0.2,
+        "s": 0.13
+      },
+      {
+        "id": "ribbon",
+        "src": "assets/objects/ribbon.png",
+        "x": 0.78,
+        "y": 0.28,
+        "s": 0.13
+      },
+      {
+        "id": "slipper",
+        "src": "assets/objects/slipper.png",
+        "x": 0.82,
+        "y": 0.72,
+        "s": 0.13
+      },
+      {
+        "id": "star",
+        "src": "assets/objects/star.png",
+        "x": 0.28,
+        "y": 0.14,
+        "s": 0.11
+      },
+      {
+        "id": "key",
+        "src": "assets/objects/key.png",
+        "x": 0.7,
+        "y": 0.58,
+        "s": 0.12
+      }
+    ]
+  },
+  "color": {
+    "src": "assets/color/princess/c1.png",
+    "face": {
+      "cx": 0.415,
+      "cy": 0.3244444444444444,
+      "r": 0.06166666666666667
+    }
+  }
+}
