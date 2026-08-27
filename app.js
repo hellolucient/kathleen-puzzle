@@ -19,7 +19,6 @@ function back(fn){return btn("Back",fn,"back");}
 function draw(){var a=app();a.innerHTML="";var m={hello:viewHello,sex:viewSex,grownup:viewGrown,photo:viewPhoto,worlds:viewWorlds,hub:viewHub,book:viewBook,jigsaw:viewJig,find:viewFind,color:viewColor};(m[S.screen]||viewHello)(a);}
 function viewHello(a){a.appendChild(el("<h1>My Story Games</h1>"));a.appendChild(el("<p>What is your name?</p>"));var i=el("<input id=nm placeholder=Friend>");a.appendChild(i);a.appendChild(btn("Next",function(){S.name=document.getElementById("nm").value||"Friend";go("sex");}));}
 function viewSex(a){a.appendChild(el("<h1>Hi "+S.name+"</h1>"));a.appendChild(el("<p>Are you a boy or a girl?</p>"));var r=el("<div class=row>");r.appendChild(btn("Girl",function(){S.gender="girl";go("grownup");},"card"));r.appendChild(btn("Boy",function(){S.gender="boy";go("grownup");},"card"));a.appendChild(r);}
-function viewGrown(a){a.appendChild(el("<h1>A grown-up has to tap this</h1>"));a.appendChild(el("<p>What is two plus two?</p>"));var r=el("<div class=row>");r.appendChild(btn("3",function(){}));r.appendChild(btn("4",function(){go("photo");},"card"));r.appendChild(btn("5",function(){}));a.appendChild(r);a.appendChild(btn("Maybe later",function(){S.avatar="";go("worlds");}));}
 function cartoon(img){var c=document.createElement("canvas");c.width=256;c.height=256;var g=c.getContext("2d");g.drawImage(img,0,0,256,256);var d=g.getImageData(0,0,256,256),p=d.data;for(var i=0;i<p.length;i+=4){p[i]=Math.round(p[i]/48)*48;p[i+1]=Math.round(p[i+1]/48)*48;p[i+2]=Math.round(p[i+2]/48)*48;}g.putImageData(d,0,0);return c.toDataURL("image/jpeg",0.7);}
 function viewPhoto(a){a.appendChild(el("<h1>Your picture</h1>"));a.appendChild(el("<p>Add a photo. We will make a cartoon.</p>"));var i=el("<input type=file accept=image/* capture=user>");a.appendChild(i);var prev=el("<img class=pic>");prev.style.display="none";a.appendChild(prev);i.onchange=function(){var f=i.files[0];if(!f)return;var r=new FileReader();r.onload=function(){var im=new Image();im.onload=function(){S.avatar=cartoon(im);prev.src=S.avatar;prev.style.display="block";};im.src=r.result;};r.readAsDataURL(f);};a.appendChild(btn("Use this",function(){go("worlds");}));a.appendChild(btn("Skip",function(){S.avatar="";go("worlds");}));}
 function viewWorlds(a){a.appendChild(el("<h1>Pick a world</h1>"));var avt=el("<img class=pic>");avt.src=av();avt.style.maxHeight="96px";avt.style.width="96px";avt.style.borderRadius="50%";a.appendChild(avt);var r=el("<div class=row>");worlds().forEach(function(w){var c=btn(w.name,function(){S.world=w;S.page=0;go("hub");},"card");r.appendChild(c);});a.appendChild(r);}
@@ -38,7 +37,10 @@ function mark(){lab.textContent="Found "+found+" of "+need;}mark();
 var pos=[[20,25],[70,22],[50,50],[25,72],[75,68]];
 im.onload=function(){
 var sr=st.getBoundingClientRect(),ir=im.getBoundingClientRect();
-var ox=ir.left-sr.left,oy=ir.top-sr.top,iw=ir.width,ih=ir.height;
+var nw=im.naturalWidth||1,nh=im.naturalHeight||1;
+var er=ir.width/ir.height,ar=nw/nh,cw,ch;
+if(er>ar){ch=ir.height;cw=ch*ar;}else{cw=ir.width;ch=cw/ar;}
+var ox=ir.left-sr.left+(ir.width-cw)/2,oy=ir.top-sr.top+(ir.height-ch)/2,iw=cw,ih=ch;
 for(var i=0;i<need;i++){(function(i){
 var d=document.createElement("button");d.className="dot";
 d.textContent=items[i].label;
@@ -71,7 +73,6 @@ var pal=el("<div class=pal>");var row=el("<div class=row>");pal.appendChild(row)
 a.appendChild(pal);
 var r=el("<div class=row>");
 r.appendChild(btn("Crayon",function(){tool="crayon";}));
-r.appendChild(btn("Fill",function(){tool="fill";}));
 r.appendChild(btn("Undo",function(){var u=undo.pop();if(u)g.putImageData(u,0,0);}));
 if(n>0)r.appendChild(btn("Back a page",function(){S.page--;draw();}));
 if(n<w.pages.length-1)r.appendChild(btn("Next",function(){S.page++;draw();}));
