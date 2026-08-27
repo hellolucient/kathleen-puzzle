@@ -87,19 +87,41 @@ var im=new Image();
 im.onload=function(){
 var sw=st.clientWidth||320,sh=st.clientHeight||360;if(sh<200)sh=360;
 var asp=im.width/im.height,bw=sw*0.62,bh=bw/asp;if(bh>sh*0.72){bh=sh*0.72;bw=bh*asp;}
-var bx=(sw-bw)/2,by=(sh-bh)/2,cw=im.width/cols,ch=im.height/rows,sc=bw/im.width;
-var ghost=document.createElement("canvas");ghost.width=im.width;ghost.height=im.height;ghost.getContext("2d").drawImage(im,0,0);
-ghost.style.position="absolute";ghost.style.left=bx+"px";ghost.style.top=by+"px";ghost.style.width=bw+"px";ghost.style.height=bh+"px";ghost.style.opacity=".28";ghost.style.pointerEvents="none";st.appendChild(ghost);
+bw=Math.round(bw);bh=Math.round(bh);
+var bx=Math.round((sw-bw)/2),by=Math.round((sh-bh)/2);
+var xs=[],ys=[];
+for(var i=0;i<=cols;i++)xs[i]=Math.round(i*im.width/cols);
+for(var i=0;i<=rows;i++)ys[i]=Math.round(i*im.height/rows);
+var ghost=document.createElement("img");
+ghost.src=im.src;ghost.alt="";
+ghost.style.position="absolute";ghost.style.left=bx+"px";ghost.style.top=by+"px";
+ghost.style.width=bw+"px";ghost.style.height=bh+"px";ghost.style.opacity=".28";
+ghost.style.pointerEvents="none";st.appendChild(ghost);
 for(var r=0;r<rows;r++)for(var c=0;c<cols;c++){(function(r,c){
-var tcv=document.createElement("canvas");tcv.width=cw;tcv.height=ch;tcv.getContext("2d").drawImage(im,c*cw,r*ch,cw,ch,0,0,cw,ch);
-var e=document.createElement("img");e.className="piece";e.src=tcv.toDataURL();
-e.style.position="absolute";e.style.width=(cw*sc)+"px";e.style.height=(ch*sc)+"px";e.style.border="2px solid #9a6e30";e.style.touchAction="none";e.style.zIndex="2";st.appendChild(e);
-var home={x:bx+c*cw*sc,y:by+r*ch*sc};
-var p={el:e,home:home,x:12+Math.random()*Math.max(8,sw-cw*sc-24),y:12+Math.random()*Math.max(8,sh-ch*sc-24),lock:0};
-function place(){e.style.left=p.x+"px";e.style.top=p.y+"px";}place();
-var drag=null;e.onpointerdown=function(ev){if(p.lock)return;ev.preventDefault();e.setPointerCapture(ev.pointerId);var rr=st.getBoundingClientRect();drag={ox:ev.clientX-rr.left-p.x,oy:ev.clientY-rr.top-p.y};e.style.zIndex="5";};
+var sx=xs[c],sy=ys[r],tw=xs[c+1]-xs[c],th=ys[r+1]-ys[r];
+var tcv=document.createElement("canvas");tcv.width=tw;tcv.height=th;
+tcv.getContext("2d").drawImage(im,sx,sy,tw,th,0,0,tw,th);
+var dw=Math.ceil(tw*bw/im.width)+1,dh=Math.ceil(th*bh/im.height)+1;
+var hx=bx+Math.round(sx*bw/im.width),hy=by+Math.round(sy*bh/im.height);
+var e=document.createElement("img");e.className="piece";e.src=tcv.toDataURL();e.alt="";
+e.style.position="absolute";e.style.width=dw+"px";e.style.height=dh+"px";
+e.style.border="none";e.style.outline="none";e.style.boxShadow="none";
+e.style.display="block";e.style.touchAction="none";e.style.zIndex="2";st.appendChild(e);
+var home={x:hx,y:hy};
+var p={el:e,home:home,x:12+Math.random()*Math.max(8,sw-dw-24),y:12+Math.random()*Math.max(8,sh-dh-24),lock:0};
+function place(){e.style.left=Math.round(p.x)+"px";e.style.top=Math.round(p.y)+"px";}place();
+var drag=null;
+e.onpointerdown=function(ev){if(p.lock)return;ev.preventDefault();e.setPointerCapture(ev.pointerId);var rr=st.getBoundingClientRect();drag={ox:ev.clientX-rr.left-p.x,oy:ev.clientY-rr.top-p.y};e.style.zIndex="5";};
 e.onpointermove=function(ev){if(!drag)return;var rr=st.getBoundingClientRect();p.x=ev.clientX-rr.left-drag.ox;p.y=ev.clientY-rr.top-drag.oy;place();};
-e.onpointerup=function(){drag=null;e.style.zIndex="2";if(Math.hypot(p.x-p.home.x,p.y-p.home.y)<48){p.x=p.home.x;p.y=p.home.y;p.lock=1;place();e.style.pointerEvents="none";if(pieces.every(function(q){return q.lock;})){if(S.page+1<w.pages.length){S.page++;draw();}else go("hub");}}};
+e.onpointerup=function(){drag=null;e.style.zIndex="2";if(Math.hypot(p.x-p.home.x,p.y-p.home.y)<48){p.x=p.home.x;p.y=p.home.y;p.lock=1;place();e.style.pointerEvents="none";if(pieces.every(function(q){return q.lock;})){
+ghost.style.display="none";
+pieces.forEach(function(q){q.el.style.display="none";});
+var done=document.createElement("img");done.src=im.src;done.alt="";
+done.style.position="absolute";done.style.left=bx+"px";done.style.top=by+"px";
+done.style.width=bw+"px";done.style.height=bh+"px";done.style.zIndex="3";
+st.appendChild(done);
+setTimeout(function(){if(S.page+1<w.pages.length){S.page++;draw();}else go("hub");},800);
+}}};
 pieces.push(p);})(r,c);}
 };im.src=pic(w,n+1);
 a.appendChild(btn("Reset",function(){draw();}));
