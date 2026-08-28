@@ -194,38 +194,27 @@ function ensureFace(){
 
 function composePage(idx){
   var pg=META.pages[idx];
-  return Promise.all([ensureFace(), loadImg(pg.scene), loadImg(META.body.src)]).then(function(all){
-    var face=all[0], scene=all[1], body=all[2];
-    var W=1280, H=960;
+  return Promise.all([ensureFace(), loadImg(pg.scene)]).then(function(all){
+    var face=all[0], scene=all[1];
+    var W=1280;
+    var H=Math.round(W*(scene.naturalHeight||3)/(scene.naturalWidth||4));
     var c=document.createElement("canvas");
     c.width=W; c.height=H;
     var g=c.getContext("2d");
     g.drawImage(scene,0,0,W,H);
-    var st=pg.standee;
-    var bh=H*st.scale;
-    var bw=bh*(META.body.w/META.body.h);
-    var x=W*st.x - bw/2;
-    var y=H*st.y - bh;
-    g.save();
-    g.shadowColor="rgba(40,20,10,0.28)";
-    g.shadowBlur=18;
-    g.shadowOffsetY=8;
-    g.drawImage(body,x,y,bw,bh);
-    g.restore();
-    var hole=META.body.hole;
-    var sc=bw/META.body.w;
-    var hx=x+hole.cx*sc, hy=y+hole.cy*sc, hr=hole.r*sc;
+    var hole=pg.hole || META.body.hole;
+    var hx,hy,hr;
+    if(pg.hole){
+      hx=W*pg.hole.cx; hy=H*pg.hole.cy; hr=W*pg.hole.r;
+    }else{
+      return Promise.reject("missing page hole");
+    }
     g.save();
     g.beginPath();
     g.arc(hx,hy,hr,0,Math.PI*2);
     g.clip();
     g.drawImage(face,hx-hr,hy-hr,hr*2,hr*2);
     g.restore();
-    g.beginPath();
-    g.arc(hx,hy,hr-1,0,Math.PI*2);
-    g.strokeStyle="rgba(58,36,24,0.28)";
-    g.lineWidth=2;
-    g.stroke();
     return c;
   });
 }
