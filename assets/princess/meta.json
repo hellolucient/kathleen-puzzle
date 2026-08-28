@@ -12,92 +12,62 @@
   "pages": [
     {
       "n": 1,
-      "scene": "assets/scenes/princess/s1.jpg",
+      "scene": "assets/princess/p1.jpg",
       "text": "Once there was you. You lived in a castle by the sea.",
       "standee": {
         "x": 0.5,
         "y": 0.92,
         "scale": 0.54
-      },
-      "hole": {
-        "cx": 0.4888,
-        "cy": 0.2869,
-        "r": 0.0477
       }
     },
     {
       "n": 2,
-      "scene": "assets/scenes/princess/s2.jpg",
+      "scene": "assets/princess/p2.jpg",
       "text": "Tonight was the Moonlight Ball. But your crown was gone.",
       "standee": {
         "x": 0.22,
         "y": 0.92,
         "scale": 0.52
-      },
-      "hole": {
-        "cx": 0.5531,
-        "cy": 0.318,
-        "r": 0.0445
       }
     },
     {
       "n": 3,
-      "scene": "assets/scenes/princess/s3.jpg",
+      "scene": "assets/princess/p3.jpg",
       "text": "A tiny note said, Find me if you can. I am hiding where you last played.",
       "standee": {
         "x": 0.28,
         "y": 0.92,
         "scale": 0.5
-      },
-      "hole": {
-        "cx": 0.4232,
-        "cy": 0.3203,
-        "r": 0.0568
       }
     },
     {
       "n": 4,
-      "scene": "assets/scenes/princess/s4.jpg",
+      "scene": "assets/princess/p4.jpg",
       "text": "In the garden you found a golden ribbon. In the puzzle room, a glass slipper.",
       "standee": {
         "x": 0.5,
         "y": 0.92,
         "scale": 0.52
-      },
-      "hole": {
-        "cx": 0.5024,
-        "cy": 0.279,
-        "r": 0.0601
       }
     },
     {
       "n": 5,
-      "scene": "assets/scenes/princess/s5.jpg",
+      "scene": "assets/princess/p5.jpg",
       "text": "You remembered. Last night you hid the crown under your pillow so it would be safe.",
       "standee": {
         "x": 0.24,
         "y": 0.92,
         "scale": 0.5
-      },
-      "hole": {
-        "cx": 0.5167,
-        "cy": 0.2299,
-        "r": 0.0477
       }
     },
     {
       "n": 6,
-      "scene": "assets/scenes/princess/s6.jpg",
+      "scene": "assets/princess/p6.jpg",
       "text": "You put on your crown. When the ball was over you put it back, and the castle went quiet.",
       "standee": {
         "x": 0.22,
         "y": 0.92,
         "scale": 0.5
-      },
-      "hole": {
-        "cx": 0.6086,
-        "cy": 0.2144,
-        "r": 0.0503
       }
     }
   ],

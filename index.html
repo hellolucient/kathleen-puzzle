@@ -194,27 +194,13 @@ function ensureFace(){
 
 function composePage(idx){
   var pg=META.pages[idx];
-  return Promise.all([ensureFace(), loadImg(pg.scene)]).then(function(all){
-    var face=all[0], scene=all[1];
+  return loadImg(pg.scene).then(function(scene){
     var W=1280;
     var H=Math.round(W*(scene.naturalHeight||3)/(scene.naturalWidth||4));
     var c=document.createElement("canvas");
     c.width=W; c.height=H;
     var g=c.getContext("2d");
     g.drawImage(scene,0,0,W,H);
-    var hole=pg.hole || META.body.hole;
-    var hx,hy,hr;
-    if(pg.hole){
-      hx=W*pg.hole.cx; hy=H*pg.hole.cy; hr=W*pg.hole.r;
-    }else{
-      return Promise.reject("missing page hole");
-    }
-    g.save();
-    g.beginPath();
-    g.arc(hx,hy,hr,0,Math.PI*2);
-    g.clip();
-    g.drawImage(face,hx-hr,hy-hr,hr*2,hr*2);
-    g.restore();
     return c;
   });
 }
