@@ -2,11 +2,11 @@
   "body": {
     "src": "assets/bodies/princess.png",
     "w": 720,
-    "h": 1280,
+    "h": 480,
     "hole": {
-      "cx": 360,
-      "cy": 208,
-      "r": 120
+      "cx": 361,
+      "cy": 111,
+      "r": 177
     }
   },
   "pages": [
