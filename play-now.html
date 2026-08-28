@@ -586,7 +586,7 @@ function viewJig(a){
 }
 
 function boot(){
-  fetch("assets/princess/meta.json").then(function(r){ return r.json(); }).then(function(m){
+  fetch("assets/princess/meta.json?v=restore").then(function(r){ return r.json(); }).then(function(m){
     META=m;
     draw();
   }).catch(function(e){
