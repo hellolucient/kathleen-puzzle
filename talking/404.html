@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Kathleen">
+<meta name="theme-color" content="#e8b896">
+<meta name="format-detection" content="telephone=no">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="icon" href="assets/icon.png" type="image/png">
+<link rel="manifest" href="manifest.json">
+<title>Talking Kathleen</title>
+<style>
+  :root{
+    --floor:#e8b896;
+    --ink:#3a2418;
+    --red:#c2273d;
+    --red-dark:#8e1a2b;
+    --cream:#fff6ee;
+    --safe-b:env(safe-area-inset-bottom,0px);
+    --safe-t:env(safe-area-inset-top,0px);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+  html,body{
+    height:100%;
+    background:var(--floor);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Rounded","Hiragino Maru Gothic ProN",system-ui,sans-serif;
+    overflow:hidden;
+    touch-action:manipulation;
+    overscroll-behavior:none;
+    user-select:none;
+    -webkit-user-select:none;
+    -webkit-touch-callout:none;
+  }
+  body{min-height:100dvh;position:fixed;inset:0}
+  #stage{
+    position:absolute;inset:0;
+    display:flex;flex-direction:column;align-items:center;
+    background:linear-gradient(180deg,#c9a090 0%,#e8b896 55%,#f0c4a0 100%);
+  }
+  #char-wrap{
+    position:absolute;inset:0 0 132px 0;
+    display:flex;align-items:center;justify-content:center;
+    transform-origin:50% 70%;
+  }
+  #char-wrap img{
+    position:absolute;max-width:100%;max-height:100%;
+    width:auto;height:auto;object-fit:contain;
+    pointer-events:none;
+    opacity:0;
+    transition:opacity 40ms linear;
+  }
+  #char-wrap img.on{opacity:1;z-index:1}
+  #char-wrap.sway{animation:sway 3.6s ease-in-out infinite}
+  #char-wrap.pop{animation:pop .42s cubic-bezier(.2,1.4,.3,1)}
+  #char-wrap.hop{animation:hop .5s cubic-bezier(.2,1.3,.3,1)}
+  #char-wrap.wiggle{animation:wiggle .55s ease-in-out}
+  @keyframes sway{
+    0%,100%{transform:translateY(0) rotate(-0.4deg)}
+    50%{transform:translateY(-6px) rotate(0.5deg)}
+  }
+  @keyframes pop{
+    0%{transform:scale(1)}
+    35%{transform:scale(1.06) translateY(-8px)}
+    100%{transform:scale(1)}
+  }
+  @keyframes hop{
+    0%{transform:translateY(0)}
+    30%{transform:translateY(-14%)}
+    55%{transform:translateY(2%)}
+    75%{transform:translateY(-5%)}
+    100%{transform:translateY(0)}
+  }
+  @keyframes wiggle{
+    0%,100%{transform:rotate(0)}
+    20%{transform:rotate(-4deg) scale(1.03)}
+    40%{transform:rotate(4deg) scale(1.03)}
+    60%{transform:rotate(-3deg)}
+    80%{transform:rotate(2deg)}
+  }
+  #fx{position:absolute;inset:0;pointer-events:none;z-index:2}
+  #dock{
+    position:absolute;left:0;right:0;bottom:0;z-index:3;
+    padding:8px 20px calc(18px + var(--safe-b));
+    display:flex;flex-direction:column;align-items:center;gap:8px;
+    background:linear-gradient(180deg,transparent,#e8b896 36%);
+  }
+  #mic{
+    width:92px;height:92px;border-radius:50%;
+    border:0;background:var(--red);color:#fff;
+    box-shadow:0 6px 0 var(--red-dark),0 12px 24px #8e1a2b55;
+    display:grid;place-items:center;cursor:pointer;
+    position:relative;
+  }
+  #mic svg{width:42px;height:42px;pointer-events:none}
+  #mic:active,#mic.held{
+    transform:translateY(4px) scale(1.06);
+    box-shadow:0 2px 0 var(--red-dark),0 8px 16px #8e1a2b55;
+    background:#d1334b;
+  }
+  #mic.held::after{
+    content:"";position:absolute;inset:-14px;border-radius:50%;
+    border:4px solid rgba(194,39,61,.45);
+    animation:pulse 1s ease-out infinite;
+  }
+  @keyframes pulse{
+    from{transform:scale(.85);opacity:1}
+    to{transform:scale(1.2);opacity:0}
+  }
+  #mic:disabled{opacity:.45;box-shadow:none}
+  #mic-label{
+    font-size:17px;font-weight:700;letter-spacing:.01em;
+    text-shadow:0 1px 0 #fff6;
+    min-height:1.2em;
+  }
+  #gate,#loading{
+    position:absolute;inset:0;z-index:10;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:14px;padding:28px 28px calc(28px + var(--safe-b));
+    text-align:center;
+    background:linear-gradient(180deg,#f7e2d2,#e8b896);
+  }
+  #gate img{
+    width:min(58vw,260px);height:auto;border-radius:28px;
+    box-shadow:0 16px 40px #3a241833;
+  }
+  h1{font-size:clamp(32px,8vw,48px);line-height:1.05}
+  #gate p,#loading p{font-size:20px;line-height:1.35;max-width:22em}
+  .tiny{font-size:14px;opacity:.7;max-width:22em}
+  #play{
+    margin-top:6px;
+    font:inherit;font-size:22px;font-weight:700;
+    min-height:64px;padding:14px 36px;border:0;border-radius:999px;
+    background:var(--red);color:#fff;
+    box-shadow:0 5px 0 var(--red-dark);
+    cursor:pointer;
+  }
+  #play:active{transform:translateY(3px);box-shadow:0 2px 0 var(--red-dark)}
+  #loading{z-index:11}
+  #loading.hidden,#gate.hidden{opacity:0;pointer-events:none;transition:opacity .35s ease}
+  body.ready #loading{display:none}
+</style>
+</head>
+<body>
+  <div id="stage">
+    <div id="char-wrap" class="sway" aria-hidden="true"></div>
+    <canvas id="fx"></canvas>
+    <div id="dock">
+      <button id="mic" type="button" aria-label="Hold to talk" disabled>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="9" y="3" width="6" height="11" rx="3" fill="currentColor" stroke="none"></rect>
+          <path d="M6.5 11.5a5.5 5.5 0 0 0 11 0"></path>
+          <path d="M12 17v3"></path>
+          <path d="M9 20h6"></path>
+        </svg>
+      </button>
+      <p id="mic-label">Hold to talk</p>
+    </div>
+  </div>
+
+  <div id="loading">
+    <p>Getting Kathleen ready…</p>
+  </div>
+
+  <div id="gate" class="hidden">
+    <img id="gate-face" alt="Kathleen" src="assets/idle.jpg">
+    <h1>Talking Kathleen</h1>
+    <p>Hold the microphone and say something. She will say it back in her own voice. You can tap her too.</p>
+    <button id="play" type="button">Let’s play</button>
+    <p class="tiny">Your voice stays on this device. Nothing is sent anywhere.</p>
+  </div>
+
+<script>
+(function(){
+  const FRAMES = ["idle","blink","talk1","talk2","talk3","laugh","surprise"];
+  const wrap = document.getElementById("char-wrap");
+  const micBtn = document.getElementById("mic");
+  const micLabel = document.getElementById("mic-label");
+  const gate = document.getElementById("gate");
+  const loading = document.getElementById("loading");
+  const playBtn = document.getElementById("play");
+  const canvas = document.getElementById("fx");
+  const ctx2d = canvas.getContext("2d");
+
+  const imgs = {};
+  let current = "idle";
+  let busy = false;
+  let talking = false;
+  let recording = false;
+  let blinkTimer = 0;
+  let audioCtx = null;
+  let mediaStream = null;
+  let recChunks = [];
+  let recNode = null;
+  let recSource = null;
+  let recGain = null;
+  let playingSource = null;
+  let particles = [];
+  let lastTap = 0;
+
+  function setFrame(name){
+    if (!imgs[name] || current === name) return;
+    const prev = imgs[current];
+    const next = imgs[name];
+    next.classList.add("on");
+    if (prev && prev !== next) prev.classList.remove("on");
+    current = name;
+  }
+
+  function bounce(kind){
+    wrap.classList.remove("sway","pop","hop","wiggle");
+    void wrap.offsetWidth;
+    wrap.classList.add(kind || "pop");
+    const ms = kind === "hop" ? 520 : kind === "wiggle" ? 560 : 430;
+    setTimeout(() => {
+      wrap.classList.remove("pop","hop","wiggle");
+      if (!talking && !recording) wrap.classList.add("sway");
+    }, ms);
+  }
+
+  function preload(){
+    return Promise.all(FRAMES.map(name => new Promise((resolve, reject) => {
+      const img = new Image();
+      img.alt = "";
+      img.draggable = false;
+      img.dataset.frame = name;
+      img.src = "assets/" + name + ".jpg";
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      imgs[name] = img;
+      wrap.appendChild(img);
+    }))).then(() => {
+      imgs.idle.classList.add("on");
+      current = "idle";
+    });
+  }
+
+  function ensureAudio(){
+    if (!audioCtx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      audioCtx = new AC();
+    }
+    if (audioCtx.state === "suspended") return audioCtx.resume();
+    return Promise.resolve();
+  }
+
+  async function setupMic(){
+    await ensureAudio();
+    if (mediaStream) return true;
+    try {
+      mediaStream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+        video: false
+      });
+      recSource = audioCtx.createMediaStreamSource(mediaStream);
+      recGain = audioCtx.createGain();
+      recGain.gain.value = 0;
+      const bufferSize = 4096;
+      recNode = audioCtx.createScriptProcessor(bufferSize, 1, 1);
+      recNode.onaudioprocess = (e) => {
+        if (!recording) return;
+        recChunks.push(new Float32Array(e.inputBuffer.getChannelData(0)));
+      };
+      recSource.connect(recNode);
+      recNode.connect(recGain);
+      recGain.connect(audioCtx.destination);
+      return true;
+    } catch (err) {
+      console.warn(err);
+      return false;
+    }
+  }
+
+  function beep(kind){
+    if (!audioCtx) return;
+    const t0 = audioCtx.currentTime;
+    if (kind === "giggle") {
+      [0, 0.09, 0.18].forEach((dt, i) => {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = "triangle";
+        o.frequency.setValueAtTime(520 + i * 90, t0 + dt);
+        o.frequency.exponentialRampToValueAtTime(740 + i * 80, t0 + dt + 0.1);
+        g.gain.setValueAtTime(0.0001, t0 + dt);
+        g.gain.exponentialRampToValueAtTime(0.18, t0 + dt + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + dt + 0.12);
+        o.connect(g); g.connect(audioCtx.destination);
+        o.start(t0 + dt); o.stop(t0 + dt + 0.14);
+      });
+    } else if (kind === "boing") {
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = "sine";
+      o.frequency.setValueAtTime(280, t0);
+      o.frequency.exponentialRampToValueAtTime(520, t0 + 0.12);
+      g.gain.setValueAtTime(0.2, t0);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.28);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(t0); o.stop(t0 + 0.3);
+    } else if (kind === "pop") {
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = "sine";
+      o.frequency.setValueAtTime(700, t0);
+      o.frequency.exponentialRampToValueAtTime(220, t0 + 0.12);
+      g.gain.setValueAtTime(0.16, t0);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.14);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(t0); o.stop(t0 + 0.15);
+    }
+  }
+
+  function spawnHearts(){
+    const r = wrap.getBoundingClientRect();
+    for (let i = 0; i < 10; i++) {
+      particles.push({
+        x: r.left + r.width * (0.4 + Math.random() * 0.2),
+        y: r.top + r.height * (0.28 + Math.random() * 0.12),
+        vx: (Math.random() - 0.5) * 2.2,
+        vy: -2.2 - Math.random() * 2.4,
+        life: 1,
+        size: 14 + Math.random() * 10,
+        color: Math.random() > 0.5 ? "#e85d75" : "#ffd15c"
+      });
+    }
+  }
+
+  function sizeCanvas(){
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.floor(innerWidth * dpr);
+    canvas.height = Math.floor(innerHeight * dpr);
+    canvas.style.width = innerWidth + "px";
+    canvas.style.height = innerHeight + "px";
+    ctx2d.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function tickFx(){
+    ctx2d.clearRect(0, 0, innerWidth, innerHeight);
+    particles = particles.filter((p) => p.life > 0);
+    for (const p of particles) {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy -= 0.03;
+      p.life -= 0.016;
+      ctx2d.globalAlpha = Math.max(0, p.life);
+      ctx2d.fillStyle = p.color;
+      ctx2d.font = p.size + "px sans-serif";
+      ctx2d.fillText("♥", p.x, p.y);
+    }
+    ctx2d.globalAlpha = 1;
+    requestAnimationFrame(tickFx);
+  }
+
+  function playVoice(chunks, sampleRate){
+    if (!chunks.length) return;
+    let total = 0;
+    for (const c of chunks) total += c.length;
+    if (total < sampleRate * 0.18) {
+      micLabel.textContent = "A bit longer…";
+      setTimeout(() => { if (!recording) micLabel.textContent = "Hold to talk"; }, 900);
+      return;
+    }
+    const buffer = audioCtx.createBuffer(1, total, sampleRate);
+    const data = buffer.getChannelData(0);
+    let offset = 0;
+    for (const c of chunks) { data.set(c, offset); offset += c.length; }
+
+    if (playingSource) {
+      try { playingSource.stop(); } catch (e) {}
+    }
+    const src = audioCtx.createBufferSource();
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = "highshelf";
+    filter.frequency.value = 1800;
+    filter.gain.value = 4;
+    const analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 512;
+    src.buffer = buffer;
+    src.playbackRate.value = 1.42;
+    src.connect(filter);
+    filter.connect(analyser);
+    analyser.connect(audioCtx.destination);
+
+    talking = true;
+    wrap.classList.remove("sway");
+    playingSource = src;
+    const amp = new Uint8Array(analyser.fftSize);
+    let raf;
+    const drive = () => {
+      if (!talking) return;
+      analyser.getByteTimeDomainData(amp);
+      let sum = 0;
+      for (let i = 0; i < amp.length; i++) {
+        const v = (amp[i] - 128) / 128;
+        sum += v * v;
+      }
+      const rms = Math.sqrt(sum / amp.length);
+      if (rms > 0.18) setFrame("talk3");
+      else if (rms > 0.08) setFrame("talk2");
+      else if (rms > 0.03) setFrame("talk1");
+      else setFrame("idle");
+      raf = requestAnimationFrame(drive);
+    };
+    src.onended = () => {
+      talking = false;
+      playingSource = null;
+      cancelAnimationFrame(raf);
+      setFrame("idle");
+      wrap.classList.add("sway");
+      micLabel.textContent = "Hold to talk";
+    };
+    micLabel.textContent = "Kathleen says…";
+    src.start();
+    drive();
+  }
+
+  let recStartedAt = 0;
+  let recMaxTimer = 0;
+
+  async function startRec(ev){
+    if (ev) ev.preventDefault();
+    if (recording || talking) return;
+    const ok = await setupMic();
+    if (!ok) {
+      micLabel.textContent = "Microphone is off";
+      return;
+    }
+    await ensureAudio();
+    if (playingSource) {
+      try { playingSource.stop(); } catch (e) {}
+    }
+    recChunks = [];
+    recording = true;
+    recStartedAt = performance.now();
+    micBtn.classList.add("held");
+    micLabel.textContent = "Listening…";
+    wrap.classList.remove("sway");
+    setFrame("talk1");
+    clearTimeout(recMaxTimer);
+    recMaxTimer = setTimeout(stopRec, 8000);
+  }
+
+  function stopRec(ev){
+    if (ev) ev.preventDefault();
+    if (!recording) return;
+    recording = false;
+    clearTimeout(recMaxTimer);
+    micBtn.classList.remove("held");
+    const chunks = recChunks;
+    recChunks = [];
+    const sr = audioCtx ? audioCtx.sampleRate : 44100;
+    playVoice(chunks, sr);
+  }
+
+  function zoneFromEvent(ev){
+    const on = imgs[current];
+    if (!on) return "body";
+    const r = on.getBoundingClientRect();
+    const pt = ev.changedTouches ? ev.changedTouches[0] : ev;
+    const x = (pt.clientX - r.left) / r.width;
+    const y = (pt.clientY - r.top) / r.height;
+    if (x < 0 || y < 0 || x > 1 || y > 1) return null;
+    if (y < 0.30 && x > 0.28 && x < 0.74) return "head";
+    if (y < 0.56 && x > 0.30 && x < 0.72) return "belly";
+    if (y > 0.80) return "feet";
+    return "body";
+  }
+
+  function react(zone){
+    if (recording || talking) return;
+    const now = performance.now();
+    if (now - lastTap < 280) return;
+    lastTap = now;
+    ensureAudio();
+    if (zone === "head") {
+      setFrame("talk1");
+      bounce("pop");
+      beep("giggle");
+      setTimeout(() => { if (!talking && !recording) setFrame("idle"); }, 700);
+    } else if (zone === "belly") {
+      setFrame("laugh");
+      bounce("wiggle");
+      beep("giggle");
+      spawnHearts();
+      setTimeout(() => { if (!talking && !recording) setFrame("idle"); }, 1100);
+    } else if (zone === "feet") {
+      setFrame("surprise");
+      bounce("hop");
+      beep("boing");
+      setTimeout(() => { if (!talking && !recording) setFrame("idle"); }, 800);
+    } else {
+      setFrame("surprise");
+      bounce("pop");
+      beep("pop");
+      setTimeout(() => { if (!talking && !recording) setFrame("idle"); }, 700);
+    }
+  }
+
+  function onStagePointer(ev){
+    if (ev.target.closest("#dock")) return;
+    const zone = zoneFromEvent(ev);
+    if (zone) react(zone);
+  }
+
+  function loopBlink(t){
+    requestAnimationFrame(loopBlink);
+    if (recording || talking || busy) return;
+    if (current !== "idle" && current !== "blink") return;
+    if (!blinkTimer) blinkTimer = t + 2800 + Math.random() * 2500;
+    if (t > blinkTimer) {
+      setFrame("blink");
+      setTimeout(() => {
+        if (!recording && !talking && current === "blink") setFrame("idle");
+      }, 140);
+      blinkTimer = t + 2800 + Math.random() * 3200;
+    }
+  }
+
+  micBtn.addEventListener("pointerdown", (e) => {
+    micBtn.setPointerCapture(e.pointerId);
+    startRec(e);
+  });
+  micBtn.addEventListener("pointerup", stopRec);
+  micBtn.addEventListener("pointercancel", stopRec);
+  micBtn.addEventListener("contextmenu", (e) => e.preventDefault());
+
+  wrap.addEventListener("pointerdown", onStagePointer);
+  // also allow taps on the stage around the character
+  document.getElementById("stage").addEventListener("pointerdown", onStagePointer);
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden && recording) stopRec();
+  });
+
+  playBtn.addEventListener("click", async () => {
+    playBtn.disabled = true;
+    await ensureAudio();
+    const ok = await setupMic();
+    gate.classList.add("hidden");
+    setTimeout(() => { gate.style.display = "none"; }, 400);
+    micBtn.disabled = false;
+    if (!ok) {
+      micLabel.textContent = "Tap her — mic is off";
+    } else {
+      micLabel.textContent = "Hold to talk";
+    }
+    requestAnimationFrame(loopBlink);
+  });
+
+  window.addEventListener("resize", sizeCanvas);
+  sizeCanvas();
+  tickFx();
+
+  preload().then(() => {
+    loading.classList.add("hidden");
+    gate.classList.remove("hidden");
+    document.body.classList.add("ready");
+    setTimeout(() => { loading.style.display = "none"; }, 350);
+  }).catch((err) => {
+    loading.innerHTML = "<p>Could not load the pictures. Please refresh.</p>";
+    console.error(err);
+  });
+})();
+</script>
+</body>
+</html>
